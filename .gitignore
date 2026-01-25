@@ -1,0 +1,7 @@
+.Rhistory
+# Large R objects
+data/references/
+data/salmon_quant/
+data/rds/
+
+.ipynb_checkpoints/

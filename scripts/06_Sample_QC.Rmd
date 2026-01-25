@@ -1,0 +1,83 @@
+---
+title: "Sample QC"
+author: "maria"
+date: "2026-01-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and data
+
+```{r load, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(DESeq2)
+library(ggrepel)
+library(pheatmap)
+
+# Load tximport object and sample metadata
+samples <- readRDS("../data/rds/samples.rds")
+rld <- readRDS("../data/rds/rld.rds")
+```
+
+## Principal Component Analysis (PCA)
+
+```{r pca}
+
+#plotPCA(rld, intgroup="condition")
+
+pca <- plotPCA(rld, intgroup="condition", returnData=TRUE)
+pca$sample_name <- samples$sample_name
+
+#Inspect PCA data
+pca
+
+#Custom PCA plot with sample labels
+pca_plot <- ggplot(pca, aes(PC1, PC2, color = condition, label = sample_name)) +
+  geom_point(size = 4) +
+  geom_text_repel(size = 4) 
+
+pca_plot
+
+#save as png
+ggsave("../results/figures_plots/PCA_plot.png", pca_plot, width = 6, height = 5, dpi = 150)
+```
+PCA reveals clear separation between control and treated samples.
+One treated sample (treated_3 / SRR7819995) appears slightly separated from other treated samples, suggesting a potential outlier that needs further investigation.
+
+## Inspect Cook's distance for the treated_3 (SRR7819995)
+
+```{r cook}
+
+dds_filter <- readRDS("../data/rds/dds_filter.rds")
+cooks <- assays(dds_filter)[["cooks"]]
+summary(cooks[, "SRR7819995"])
+summary(cooks[, "SRR7819993"])
+summary(cooks[, "SRR7819994"])
+summary(cooks[, "SRR7819992"])
+```
+The distribution of Cook’s distances for SRR7819995 was highly comparable to the other samples. Although this sample appears slightly separated from the other treated samples in the PCA, all technical quality metrics, including mapping rate (~91%), and Cook’s distance, were within normal ranges. Notably, SRR7819995 has slightly lower library size (~40.7M reads vs ~50–52M in others), as confirmed by read count summaries and MultiQC reports, which may contribute to this separation. Thus the sample retained in the analysis.
+
+## Heatmap
+
+```{r heatmap}
+
+#matrix
+rld_mat <- assay(rld)  
+rld_cor <- cor(rld_mat)    ## cor() is a base R function
+colnames(rld_cor) <- samples$sample_name
+rownames(rld_cor) <- samples$sample_name
+head(rld_cor) 
+
+#annotation for sample conditions
+annotation <- data.frame(condition = samples$condition)
+rownames(annotation) <- samples$sample_name
+
+#save
+png("../results/figures_plots/heatmap.png", width = 800, height = 800, res = 150)
+pheatmap(rld_cor, annotation_col = annotation)
+dev.off()
+```
+Samples show high correlation (values close to 1) and cluster primarily by condition (control vs treated). One treated sample (SRR7819995) shows slightly lower correlation with other treated samples, consistent with PCA, but overall the heatmap confirms data consistency and reliability before differential expression analysis.

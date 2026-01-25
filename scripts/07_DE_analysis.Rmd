@@ -1,0 +1,272 @@
+---
+title: "Differential Expression Analysis"
+author: "maria"
+date: "2025-12-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and data
+
+```{r load, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(tidyverse)
+library(pheatmap)
+library(apeglm)
+library(ggrepel)
+library(RColorBrewer)
+
+# Load previously saved objects
+txi <- readRDS("../data/rds/txi_salmon.rds")
+samples <- readRDS("../data/rds/samples.rds")
+dds <- readRDS("../data/rds/dds_filter.rds")
+res_annotated <- readRDS("../data/rds/res_annotated.rds")
+rld <- readRDS("../data/rds/rld.rds")
+
+```
+
+## Differential Expression Analysis
+
+Run DESeq to estimate gene expression differences between treated and control:
+
+```{r DESeq}
+dds <- DESeq(dds)
+res <- results(dds, name="condition_treated_vs_control")
+
+summary(res)
+```
+Differential expression analysis identified 4070 genes with significant
+expression changes between treated and control samples (p-value < 0.1).
+A similar number of genes were upregulated (2158) and downregulated (1912), indicating that the treatment affects gene expression in both directions.
+Low-count genes and outliers were filtered to improve statistical robustness.
+
+## MA plot
+
+MA plots visualize log2 fold change (M) versus mean expression (A) to show differential expression:
+
+```{r raw ma}
+#standard MA plot
+plotMA(res)
+
+# check LFC range and stats
+range(res$log2FoldChange, na.rm = TRUE)
+summary(res$log2FoldChange)
+#range:-23.72896  25.24171
+plotMA(res, ylim = c(-30, 30))
+```
+
+The x-axis shows the mean normalized read counts and the y-axis shows log2 fold changes between treated and control conditions. Blue points indicate significantly differentially expressed genes (p-value < 0.1). Genes with positive log2 fold changes are upregulated in the treated condition, whereas genes with negative log2 fold changes are downregulated. The raw MA plot displays extreme log2 fold changes for some genes, with values exceeding ±20. These large fold changes are probably driven by genes with low read counts and are not biologically reliable, motivating the use of log2 fold change shrinkage.
+
+## Shrink Log2 Fold Changes and MA Plot
+
+```{r ma}
+
+res_shrink <- lfcShrink(dds, coef="condition_treated_vs_control", type="apeglm")
+
+#Check range and summary
+range(res_shrink$log2FoldChange, na.rm = TRUE)
+summary(res_shrink$log2FoldChange)
+
+png("../results/figures_plots/MA_plot_shrunken.png",
+    width = 1200, height = 1200, res = 150)
+
+plotMA(res_shrink, ylim = c(-6, 6))
+
+dev.off()
+
+#plot
+plotMA(res_shrink, ylim = c(-6, 6))
+```
+
+After applying apeglm shrinkage, log2 fold changes are compressed into a more biologically plausible range (−9 to +7), reducing the influence of low-count genes.
+
+## Gene Annotation Using GTF
+
+```{r geme annotation}
+#Read gtf
+gtf <- read.table("../data/references/Homo_sapiens.GRCh38.115.gtf", header = FALSE, sep = "\t", stringsAsFactors = FALSE)
+
+gtf_gene <- gtf[gtf$V3 == "gene", ]
+
+#Parse attribute column
+gtf_parsed <- gtf_gene %>%
+  mutate(id = row_number()) %>%                 
+  separate_rows(V9, sep="; ") %>%                
+  separate(V9, c("name","value"), sep=" ") %>%   
+  mutate(value = gsub(";","",value)) %>%         
+  spread(name, value)
+head(gtf_parsed)
+#View(gtf_parsed)
+
+gtf_gene_names_id <- gtf_parsed %>% select(gene_id, gene_name)
+
+#Convert DESeq2 results to dataframe
+res_df <- as.data.frame(res)
+
+res_df <- res_df %>%
+  tibble::rownames_to_column(var = "gene_id")
+
+#Merge
+res_annotated <- merge(res_df, gtf_gene_names_id, by = "gene_id", all.x = TRUE)
+
+# Save as RDS 
+saveRDS(res_annotated,"../data/res_annotated.rds")
+
+```
+
+Gene annotation was performed by merging DESeq2 results with
+Ensembl gene names extracted from the GTF file.
+
+## Volcano plot
+
+```{r volcano}
+
+res_annotated <- res_annotated %>%
+  mutate(significant = case_when(padj < 0.05 & log2FoldChange > 0.6  ~ "Upregulated", padj < 0.05 & log2FoldChange < -0.6 ~ "Downregulated", TRUE ~ "Not significant"))
+
+labels_df <- res_annotated %>%
+  filter(significant != "Not significant") %>%
+  arrange(padj) %>% 
+  head(30)  
+
+volcano_plot <- ggplot(res_annotated, aes(x = log2FoldChange, y = -log10(padj), col = significant))  +
+  geom_vline(xintercept = c(-0.6, 0.6), col = "gray", linetype = 'dashed') +  
+  geom_hline(yintercept = -log10(0.05), col = "gray", linetype = 'dashed') +
+  geom_point(size = 1) +
+  scale_color_manual(values = c("Downregulated" = "#00AFBB","Not significant" = "grey", "Upregulated" = "#FFDB6D")) +  geom_text_repel(data = labels_df,
+    aes(label = gene_name), max.overlaps = Inf,
+    box.padding = 0.4, point.padding = 0.2, segment.size = 0.3) 
+
+volcano_plot
+
+ggsave(
+  filename = "../results/figures_plots/volcano_plot.png",
+  plot = volcano_plot,
+  width = 8,
+  height = 7,
+  dpi = 300
+)
+
+```
+
+The volcano plot shows the differential gene expression between treated and control samples. Each point represents a gene. The x-axis shows the log2 fold change, and the y-axis shows −log10(padj). Vertical dashed lines indicate log2 fold change thresholds (±0.6), and the horizontal dashed line indicates the significance threshold (padj = 0.05). Upregulated genes are shown in yellow, downregulated genes in blue, and non-significant genes in grey. Selected highly significant genes are labeled.
+
+## Differentially Expressed Genes
+
+```{r de genes}
+upregulated <- sum(res_annotated$significant == "Upregulated")
+downregulated <- sum(res_annotated$significant == "Downregulated")
+total_DE <- upregulated + downregulated
+
+print(paste("Upregulated genes:", upregulated)) 
+print(paste("Downregulated genes:", downregulated)) 
+print(paste("Total DE genes:", total_DE)) 
+
+```
+
+## Top Differentially Expressed Genes
+
+```{r top50 table}
+
+res_ordered <- res_annotated[order(res_annotated$padj), ]
+
+#top 50 genes
+top50_genes <- res_ordered %>%
+  slice(1:50)
+
+top50_genes
+
+write.csv(top50_genes,
+          "../results/tables/top50_DE_genes.csv")
+```
+
+## Heatmap for top genes 
+
+```{r heatmap}
+top_gene_ids <- res_ordered$gene_id[1:50]
+top_gene_names <- res_ordered$gene_name[1:50]
+rld_mat <- assay(rld)
+mat <- rld_mat[top_gene_ids, ]
+
+#replace id to name
+rownames(mat) <- top_gene_names
+
+#Change column names (SRR → control_1 etc.)
+samples_names_condition <- samples[colnames(mat), ] 
+colnames(mat) <- samples_names_condition$sample_name
+annotation_col <- data.frame(condition = samples_names_condition$condition)
+rownames(annotation_col) <- samples_names_condition$sample_name
+
+pheatmap <- pheatmap(mat,
+         scale='row',
+         cluster_rows = TRUE,
+         cluster_cols = TRUE,
+         annotation_col = annotation_col,
+         show_rownames = TRUE,
+         fontsize_row = 6,
+         fontsize_col = 10)
+
+png("../results/figures_plots/heatmap_top50",width = 1200, height = 1200, res = 150)
+pheatmap
+dev.off()
+
+```
+
+Heatmap of the top 50 differentially expressed genes. Genes were selected based on adjusted p-value < 0.05 and log2 fold change > 0.6 (upregulated) or < -0.6 (downregulated). Gene expression values are shown as z-scores, where red indicates higher expression and blue indicates lower expression relative to each gene’s mean. Hierarchical clustering was applied to both genes and samples.
+
+## Heatmaps of Top Upregulated and Downregulated Genes
+
+```{r heatmaps}
+
+up_genes <- res_ordered %>%
+  filter(significant=='Upregulated') %>%
+  slice(1:30)
+
+down_genes <- res_ordered %>%
+  filter(significant=='Downregulated') %>%
+  slice(1:30)
+
+up_ids <- up_genes$gene_id
+down_ids <- down_genes$gene_id
+
+# Build matrices
+mat_up <- rld_mat[up_ids, ]
+mat_down <- rld_mat[down_ids, ]
+
+# Replace IDs with gene names
+rownames(mat_up) <- up_genes$gene_name
+rownames(mat_down) <- down_genes$gene_name
+
+samples_ordered <- samples[colnames(rld_mat), ]
+colnames(mat_up) <- samples_ordered$sample_name
+colnames(mat_down) <- samples_ordered$sample_name
+
+pheatmap(mat_up,
+         scale = "row",
+         cluster_rows = TRUE,
+         cluster_cols = TRUE,
+         annotation_col = annotation_col,
+         show_rownames = TRUE,
+         fontsize_row = 6,
+         fontsize_col = 10,
+         main = "Top Upregulated Genes (Treated vs Control)")
+
+pheatmap(mat_down,
+          scale = "row",
+          cluster_rows = TRUE,
+          cluster_cols = TRUE,
+          annotation_col = annotation_col,
+          show_rownames = TRUE,
+          fontsize_row = 6,
+          fontsize_col = 10,
+          main = "Top Downregulated Genes (Treated vs Control)")
+
+png("../results/figures_plots/heatmap_upregulated.png",
+    width = 1200, height = 1200, res = 150)
+
+dev.off()
+```
+
