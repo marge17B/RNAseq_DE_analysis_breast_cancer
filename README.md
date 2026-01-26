@@ -1,9 +1,7 @@
-DE analysis
+RNA-seq Differential Expression Analysis (Breast Cancer Dataset)
 ================
 maria
 2025-12-16
-
-# RNA-seq Differential Expression Analysis (Breast Cancer Dataset)
 
 ## Project Overview
 
