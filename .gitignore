@@ -3,5 +3,9 @@
 data/references/
 data/salmon_quant/
 data/rds/
+# Ignore QC HTML reports
+results/fastqc_reports/*.html
+results/multiqc_report/*.html
+results/multiqc_quant/*.html
 
 .ipynb_checkpoints/
