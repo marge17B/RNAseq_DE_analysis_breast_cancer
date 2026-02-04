@@ -82,7 +82,7 @@ summary(res$log2FoldChange)
 #range:-23.72896  25.24171
 plotMA(res, ylim = c(-30, 30))
 ```
-![MA Plot](../results/figures_plots/MA_plot_all_range.png)
+![MA Plot](../figures_plots/MA_plot_all_range.png)
 
 
 The x-axis shows the mean normalized read counts and the y-axis shows
@@ -118,7 +118,7 @@ summary(res_shrink$log2FoldChange)
 plotMA(res_shrink, ylim = c(-6, 6))
 ```
 
-![Shrunken MA Plot](../results/figures_plots/MA_plot_shrunken.png)
+![Shrunken MA Plot](../figures_plots/MA_plot_shrunken.png)
 
 After applying apeglm shrinkage, log2 fold changes are compressed into a
 more biologically plausible range (−9 to +7), reducing the influence of
