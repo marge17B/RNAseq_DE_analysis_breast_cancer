@@ -50,7 +50,7 @@ pca_plot <- ggplot(pca, aes(PC1, PC2, color = condition, label = sample_name)) +
 pca_plot
 ```
 
-![](06_Sample_QC_files/figure-gfm/pca-1.png)<!-- -->
+![PCA Plot](../results/figures_plots/PCA_plot.png)
 
 ``` r
 #save as png
@@ -132,7 +132,7 @@ png("../results/figures_plots/heatmap.png", width = 800, height = 800, res = 150
 pheatmap(rld_cor, annotation_col = annotation)
 ```
 
-![](06_Sample_QC_files/figure-gfm/heatmap-1.png)<!-- -->
+![PCA Plot](../figures_plots/PCA_plot.png)
 
 ``` r
 dev.off()
