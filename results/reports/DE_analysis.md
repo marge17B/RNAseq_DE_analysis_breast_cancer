@@ -21,43 +21,14 @@ res_annotated <- readRDS("../data/rds/res_annotated.rds")
 rld <- readRDS("../data/rds/rld.rds")
 ```
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(
-  echo = TRUE,
-  message = FALSE,
-  warning = FALSE,
-  fig.path = "results/figures_plots/",
-  fig.width = 7,
-  fig.height = 6
-)
-
-dir.create("results/figures_plots", recursive = TRUE, showWarnings = FALSE)
-
-
-```
-
 ## Differential Expression Analysis
 
 Run DESeq to estimate gene expression differences between treated and
 control:
 
-``` r
+```{r, message=FALSE, warning=FALSE}
 dds <- DESeq(dds)
 ```
-
-    ## using pre-existing normalization factors
-
-    ## estimating dispersions
-
-    ## found already estimated dispersions, replacing these
-
-    ## gene-wise dispersion estimates
-
-    ## mean-dispersion relationship
-
-    ## final dispersion estimates
-
-    ## fitting model and testing
 
 ``` r
 res <- results(dds, name="condition_treated_vs_control")
@@ -93,7 +64,6 @@ show differential expression:
 plotMA(res)
 ```
 
-
 ``` r
 # check LFC range and stats
 range(res$log2FoldChange, na.rm = TRUE)
@@ -112,6 +82,7 @@ summary(res$log2FoldChange)
 #range:-23.72896  25.24171
 plotMA(res, ylim = c(-30, 30))
 ```
+![MA Plot](../results/figures_plots/MA_plot_all_range.png)
 
 
 The x-axis shows the mean normalized read counts and the y-axis shows
@@ -129,12 +100,6 @@ reliable, motivating the use of log2 fold change shrinkage.
 ``` r
 res_shrink <- lfcShrink(dds, coef="condition_treated_vs_control", type="apeglm")
 ```
-
-    ## using 'apeglm' for LFC shrinkage. If used in published research, please cite:
-    ##     Zhu, A., Ibrahim, J.G., Love, M.I. (2018) Heavy-tailed prior distributions for
-    ##     sequence count data: removing the noise and preserving large differences.
-    ##     Bioinformatics. https://doi.org/10.1093/bioinformatics/bty895
-
 ``` r
 #Check range and summary
 range(res_shrink$log2FoldChange, na.rm = TRUE)
@@ -150,14 +115,6 @@ summary(res_shrink$log2FoldChange)
     ## -9.082294 -0.070536 -0.001729  0.012728  0.067262  7.250765
 
 ``` r
-plotMA(res_shrink, ylim = c(-6, 6))
-```
-
-    ## png 
-    ##   2
-
-``` r
-#plot
 plotMA(res_shrink, ylim = c(-6, 6))
 ```
 
@@ -239,21 +196,7 @@ volcano_plot <- ggplot(res_annotated, aes(x = log2FoldChange, y = -log10(padj), 
 volcano_plot
 ```
 
-    ## Warning: Removed 3402 rows containing missing values or values outside the scale range
-    ## (`geom_point()`).
-
-``` r
-ggsave(
-  filename = "../results/figures_plots/volcano_plot.png",
-  plot = volcano_plot,
-  width = 8,
-  height = 7,
-  dpi = 300
-)
-```
-
-    ## Warning: Removed 3402 rows containing missing values or values outside the scale range
-    ## (`geom_point()`).
+![Volcano Plot](../figures_plots/volcano_plot.png)
 
 The volcano plot shows the differential gene expression between treated
 and control samples. Each point represents a gene. The x-axis shows the
@@ -271,22 +214,13 @@ upregulated <- sum(res_annotated$significant == "Upregulated")
 downregulated <- sum(res_annotated$significant == "Downregulated")
 total_DE <- upregulated + downregulated
 
-print(paste("Upregulated genes:", upregulated)) 
+print(paste(
+  "Upregulated genes:", upregulated,
+  "| Downregulated genes:", downregulated,
+  "| Total DE genes:", total_DE
+))
+
 ```
-
-    ## [1] "Upregulated genes: 504"
-
-``` r
-print(paste("Downregulated genes:", downregulated)) 
-```
-
-    ## [1] "Downregulated genes: 230"
-
-``` r
-print(paste("Total DE genes:", total_DE)) 
-```
-
-    ## [1] "Total DE genes: 734"
 
 ## Top Differentially Expressed Genes
 
@@ -436,13 +370,12 @@ pheatmap <- pheatmap(mat,
 ```
 
 ``` r
-png("../results/figures_plots/heatmap_top50",width = 1200, height = 1200, res = 150)
 pheatmap
 dev.off()
 ```
 
-    ## png 
-    ##   2
+![Heatmap top 50 Plot](../figures_plots/heatmap_top50)
+
 
 Heatmap of the top 50 differentially expressed genes. Genes were
 selected based on adjusted p-value \< 0.05 and log2 fold change \> 0.6
@@ -487,6 +420,7 @@ pheatmap(mat_up,
          fontsize_col = 10,
          main = "Top Upregulated Genes (Treated vs Control)")
 ```
+![Heatmap Upregulated](../figures_plots/heatmap_upregulated.png)
 
 ``` r
 pheatmap(mat_down,
@@ -500,13 +434,9 @@ pheatmap(mat_down,
           main = "Top Downregulated Genes (Treated vs Control)")
 ```
 
-
 ``` r
-png("../results/figures_plots/heatmap_upregulated.png",
-    width = 1200, height = 1200, res = 150)
-
 dev.off()
 ```
 
-    ## png 
-    ##   2
+![Heatmap Downregulated](../figures_plots/heatmap_downregulated.png)
+

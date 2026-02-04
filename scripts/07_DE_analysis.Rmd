@@ -20,12 +20,11 @@ library(ggrepel)
 library(RColorBrewer)
 
 # Load previously saved objects
-txi <- readRDS("../data/rds/txi_salmon.rds")
-samples <- readRDS("../data/rds/samples.rds")
-dds <- readRDS("../data/rds/dds_filter.rds")
-res_annotated <- readRDS("../data/rds/res_annotated.rds")
-rld <- readRDS("../data/rds/rld.rds")
-
+txi <- readRDS("data/rds/txi_salmon.rds")
+samples <- readRDS("data/rds/samples.rds")
+dds <- readRDS("data/rds/dds_filter.rds")
+res_annotated <- readRDS("data/rds/res_annotated.rds")
+rld <- readRDS("data/rds/rld.rds")
 ```
 
 ## Differential Expression Analysis
@@ -56,6 +55,15 @@ range(res$log2FoldChange, na.rm = TRUE)
 summary(res$log2FoldChange)
 #range:-23.72896  25.24171
 plotMA(res, ylim = c(-30, 30))
+
+png("../results/figures_plots/MA_plot_all_range.png",
+    width = 1200, height = 1200, res = 150)
+
+plotMA(res, ylim = c(-30, 30))
+
+dev.off()
+
+
 ```
 
 The x-axis shows the mean normalized read counts and the y-axis shows log2 fold changes between treated and control conditions. Blue points indicate significantly differentially expressed genes (p-value < 0.1). Genes with positive log2 fold changes are upregulated in the treated condition, whereas genes with negative log2 fold changes are downregulated. The raw MA plot displays extreme log2 fold changes for some genes, with values exceeding ±20. These large fold changes are probably driven by genes with low read counts and are not biologically reliable, motivating the use of log2 fold change shrinkage.
