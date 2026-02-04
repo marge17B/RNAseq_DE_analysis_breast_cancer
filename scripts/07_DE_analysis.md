@@ -161,7 +161,7 @@ plotMA(res_shrink, ylim = c(-6, 6))
 plotMA(res_shrink, ylim = c(-6, 6))
 ```
 
-![Shrunken MA Plot](results/figures_plots/MA_plot_shrunken.png)
+![Shrunken MA Plot](../results/figures_plots/MA_plot_shrunken.png)
 
 After applying apeglm shrinkage, log2 fold changes are compressed into a
 more biologically plausible range (−9 to +7), reducing the influence of
