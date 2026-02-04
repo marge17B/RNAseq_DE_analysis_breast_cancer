@@ -21,6 +21,21 @@ res_annotated <- readRDS("../data/rds/res_annotated.rds")
 rld <- readRDS("../data/rds/rld.rds")
 ```
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.path = "results/figures_plots/",
+  fig.width = 7,
+  fig.height = 6
+)
+
+dir.create("results/figures_plots", recursive = TRUE, showWarnings = FALSE)
+
+
+```
+
 ## Differential Expression Analysis
 
 Run DESeq to estimate gene expression differences between treated and
@@ -78,7 +93,6 @@ show differential expression:
 plotMA(res)
 ```
 
-![](07_DE_analysis_files/figure-gfm/raw%20ma-1.png)<!-- -->
 
 ``` r
 # check LFC range and stats
@@ -99,7 +113,6 @@ summary(res$log2FoldChange)
 plotMA(res, ylim = c(-30, 30))
 ```
 
-![](07_DE_analysis_files/figure-gfm/raw%20ma-2.png)<!-- -->
 
 The x-axis shows the mean normalized read counts and the y-axis shows
 log2 fold changes between treated and control conditions. Blue points
@@ -137,12 +150,7 @@ summary(res_shrink$log2FoldChange)
     ## -9.082294 -0.070536 -0.001729  0.012728  0.067262  7.250765
 
 ``` r
-png("../results/figures_plots/MA_plot_shrunken.png",
-    width = 1200, height = 1200, res = 150)
-
 plotMA(res_shrink, ylim = c(-6, 6))
-
-dev.off()
 ```
 
     ## png 
@@ -152,8 +160,6 @@ dev.off()
 #plot
 plotMA(res_shrink, ylim = c(-6, 6))
 ```
-
-![](07_DE_analysis_files/figure-gfm/ma-1.png)<!-- -->
 
 After applying apeglm shrinkage, log2 fold changes are compressed into a
 more biologically plausible range (−9 to +7), reducing the influence of
@@ -233,8 +239,6 @@ volcano_plot
 
     ## Warning: Removed 3402 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
-
-![](07_DE_analysis_files/figure-gfm/volcano-1.png)<!-- -->
 
 ``` r
 ggsave(
@@ -429,8 +433,6 @@ pheatmap <- pheatmap(mat,
          fontsize_col = 10)
 ```
 
-![](07_DE_analysis_files/figure-gfm/heatmap-1.png)<!-- -->
-
 ``` r
 png("../results/figures_plots/heatmap_top50",width = 1200, height = 1200, res = 150)
 pheatmap
@@ -484,8 +486,6 @@ pheatmap(mat_up,
          main = "Top Upregulated Genes (Treated vs Control)")
 ```
 
-![](07_DE_analysis_files/figure-gfm/heatmaps-1.png)<!-- -->
-
 ``` r
 pheatmap(mat_down,
           scale = "row",
@@ -498,7 +498,6 @@ pheatmap(mat_down,
           main = "Top Downregulated Genes (Treated vs Control)")
 ```
 
-![](07_DE_analysis_files/figure-gfm/heatmaps-2.png)<!-- -->
 
 ``` r
 png("../results/figures_plots/heatmap_upregulated.png",
