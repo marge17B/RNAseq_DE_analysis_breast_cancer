@@ -84,7 +84,6 @@ plotMA(res, ylim = c(-30, 30))
 ```
 ![MA Plot](../figures_plots/MA_plot_all_range.png)
 
-
 The x-axis shows the mean normalized read counts and the y-axis shows
 log2 fold changes between treated and control conditions. Blue points
 indicate significantly differentially expressed genes (p-value \< 0.1).
