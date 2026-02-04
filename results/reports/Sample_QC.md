@@ -50,12 +50,7 @@ pca_plot <- ggplot(pca, aes(PC1, PC2, color = condition, label = sample_name)) +
 pca_plot
 ```
 
-![PCA Plot](../results/figures_plots/PCA_plot.png)
-
-``` r
-#save as png
-ggsave("../results/figures_plots/PCA_plot.png", pca_plot, width = 6, height = 5, dpi = 150)
-```
+![PCA Plot](../figures_plots/PCA_plot.png)
 
 PCA reveals clear separation between control and treated samples. One
 treated sample (treated_3 / SRR7819995) appears slightly separated from
@@ -122,24 +117,18 @@ head(rld_cor)
     ## treated_2 0.9991502 0.9991178 0.9991023 0.9995848 1.0000000 0.9994187
     ## treated_3 0.9989424 0.9989193 0.9988385 0.9993356 0.9994187 1.0000000
 
-``` r
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results="hide"}
 #annotation for sample conditions
 annotation <- data.frame(condition = samples$condition)
 rownames(annotation) <- samples$sample_name
 
-#save
-png("../results/figures_plots/heatmap.png", width = 800, height = 800, res = 150)
 pheatmap(rld_cor, annotation_col = annotation)
-```
 
-![PCA Plot](../figures_plots/PCA_plot.png)
-
-``` r
 dev.off()
+
 ```
 
-    ## png 
-    ##   3
+![Heatmap Plot](../figures_plots/qc_heatmap.png)
 
 Samples show high correlation (values close to 1) and cluster primarily
 by condition (control vs treated). One treated sample (SRR7819995) shows
