@@ -82,12 +82,10 @@ bash scripts/02_fastqc.sh
 multiqc results/fastqc_reports/ -o results/multiqc_report/
 ```
 
-**Output Directory:**
+**Output Directory:** 
 
-``` bash
-results/fastqc_reports/
-results/multiqc_report/multiqc_report.html
-```
+* FastQC HTML reports for each sample: 'results/fastqc_reports/*.html' (not included in repository)
+* MultiQC summary report: 'results/multiqc_report/multiqc_report.html' (not included in repository)
 
 ### 3. Transcript Quantification
 
@@ -106,7 +104,7 @@ bash scripts/03_salmon_quant.sh
 **Output Directory:**
 
 ``` bash
-data/salmon_quant
+data/salmon_quant  (not included in repository)
 ```
 
 ### 4. Import of Transcript-Level Estimates & Gene-Level Summarization
@@ -135,7 +133,7 @@ Rscript scripts/04b_tximport.R
 
 ``` bash
 data/tx2gene.csv
-data/rds/txi_salmon.rds
+data/rds/txi_salmon.rds  (not included in repository)
 ```
 
 ### 5. DESeq2 Object Creation & rlog Transformation
@@ -144,7 +142,7 @@ data/rds/txi_salmon.rds
 
 **Description:**  
 This script creates the DESeq2 object and filters low-count genes
-(rowSums \< 10). It also performs an rlog (regularized log)
+(rowSums < 10). It also performs an rlog (regularized log)
 transformation to provide normalized counts for quality control
 analysis.
 
@@ -157,8 +155,8 @@ Rscript scripts/05_DESeq2_rlog.R
 **Outputs:**
 
 ``` bash
-data/rds/dds_filter.rds   # DESeq2 object for differential expression (input for Step 7).
-data/rds/rld.rds          # rlog-transformed counts for PCA & heatmaps (input for Step 6).
+data/rds/dds_filter.rds   # DESeq2 object for differential expression (input for Step 7, not included in repository).
+data/rds/rld.rds          # rlog-transformed counts for PCA & heatmaps (input for Step 6, not included in repository).
 ```
 
 ### 6. QC: PCA & Sample Correlation Heatmap
@@ -166,7 +164,7 @@ data/rds/rld.rds          # rlog-transformed counts for PCA & heatmaps (input fo
 **Tools:** `DESeq2`, `ggplot2`, `ggrepel`, `pheatmap` (R)
 
 **Description:** This step performs sample-level QC to assess sample
-similarity and detect potential outliers.
+similarity and detect potential outliers. For the full QC report (code, plots and commentary), see: **`results/reports/Sample_QC.md`**
 
 - **Principal Component Analysis (PCA) :** Visualizes the major sources
   of variation between samples.
@@ -182,7 +180,7 @@ similarity and detect potential outliers.
 
 ``` bash
 results/figures_plots/PCA_plot.png
-results/figures_plots/heatmap_sample_corr.png
+results/figures_plots/qc_heatmap.png
 ```
 
 *Notes:*
@@ -195,6 +193,7 @@ results/figures_plots/heatmap_sample_corr.png
   therefore considered acceptable to keep in the analysis.
 - Correlation heatmap confirms high reproducibility among replicates,
   with samples clustering primarily by treatment group.
+  
 
 ### 7. Differential Expression Analysis
 
@@ -207,7 +206,7 @@ significantly differentially expressed. Log2 fold changes were shrunk
 using `apeglm` algorithm to reduce noise and stabilize effect size
 estimates for genes with low read counts. Gene annotation was performed
 by merging DESeq2 results with Ensembl gene names extracted from the GTF
-file.
+file. For the full DE report (code, plots and commentary), see: **`results/reports/DE_analysis.md`**
 
 **Results:**  
 - Total genes analyzed: 17415  
@@ -221,7 +220,7 @@ file.
 - Heatmaps of top 50 DE genes
 
 *Note:* Detailed statistical results, figures, and plots are available
-in the markdown report.
+in the markdown report. 'results/07_DE_analysis.Rmd'
 
 **Execution:**
 
@@ -230,6 +229,7 @@ in the markdown report.
 **Outputs:**
 
 ``` bash
+results/figures_plots/MA_plot_all_range.png
 results/figures_plots/MA_plot_shrunken.png
 results/figures_plots/volcano_plot.png
 results/figures_plots/top50_DE_genes.csv
@@ -247,9 +247,9 @@ results/figures_plots/heatmap_downregulated.png
     │   └── salmon_quant/       # Salmon transcript quantification outputs (not tracked)
     ├── scripts/                # Bash and R scripts
     ├── results/            
-    │   ├── fastqc_reports/     # FastQC reports
-    │   ├── multiqc_reports/    # MultiQC report
-    │   ├── multiqc_quant/      # MultiQC quantification summaries
+    │   ├── fastqc_reports/     # FastQC reports  (not tracked)
+    │   ├── multiqc_reports/    # MultiQC report  (not tracked)
+    │   ├── multiqc_quant/      # MultiQC quantification summaries  (not tracked)
     │   ├── figures_plots/      # Final PNGs
     │   └── tables/             # CSVs of DE genes
     └── README.md
