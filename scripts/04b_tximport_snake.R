@@ -1,7 +1,8 @@
+sink(snakemake@log[[1]], split=TRUE)
 library("tximport")
 library("readr")
 
-tx2gene <- read.csv(file= "data/tx2gene.csv")
+tx2gene <- read.csv(snakemake@input[["tx2gene"]])
 
 # Sample metadata
 
@@ -13,11 +14,11 @@ samples <- data.frame(
 
 rownames(samples) <- samples$sample
 
-saveRDS(samples, file = "data/rds/samples.rds")
-write.csv(samples, "data/samples_metadata.csv", row.names = FALSE)
+saveRDS(samples, snakemake@output[["samples_rds"]])
+write.csv(samples, snakemake@output[["samples_metadata"]], row.names = FALSE)
 
 # Import salmon data
-files <- file.path( "data/salmon_quant", samples$sample, "quant.sf")
+files <- file.path(snakemake@input[["salmon_quant"]], samples$sample, "quant.sf")
 names(files) <- samples$sample
 
 #create txi
@@ -32,6 +33,6 @@ head(txi$length)     # gene lengths
 head(txi$countsFromAbundance)   
 
 # Save the txi object
-saveRDS(txi, file = "data/rds/txi_salmon.rds")
+saveRDS(txi, snakemake@output[["txi"]])
 
 print('txi succesfully saved!')

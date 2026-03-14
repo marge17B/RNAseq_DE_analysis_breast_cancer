@@ -1,23 +1,31 @@
-RNA-seq Differential Expression Analysis (Breast Cancer Dataset)
+RNA-seq Differential Expression Analysis Pipeline (Breast Cancer Dataset)
 ================
 maria
 2025-12-16
+
+**Workflow manager:** Snakemake  
+**Language:** Bash / R
 
 ## Project Overview
 
 This project presents a reproducible RNA-seq analysis pipeline to
 investigate the transcriptomic effects of NRDE2 depletion in human
 breast cancer cells using publicly available data from BioProject
-PRJNA490376. NRDE2 is known to be involved in RNA interference, gene
+[PRJNA490376](https://www.ebi.ac.uk/ena/browser/view/PRJNA490376).
+NRDE2 is known to be involved in RNA interference, gene
 silencing,RNA splicing, and nuclear export; understanding how its loss
 alters gene expression may provide insight into genomic stability and
-cancer progression. The pipeline processes RNA-seq data from
-NRDE2-depleted vs. control breast cancer cells, covering data import,
-quality control, transcript quantification with Salmon, normalization,
-differential expression analysis using DESeq2, and downstream
-visualization. This repository is designed to be fully reproducible and
-portfolio-ready, providing a transparent workflow for RNA-seq analysis
-from raw data to biological interpretation.
+cancer progression. 
+
+The pipeline processes RNA-seq data from
+NRDE2-depleted vs. control breast cancer cells, covering:
+- Data import and quality control
+- Transcript quantification with Salmon
+- Normalization and differential expression analysis using DESeq2
+- Downstream visualization
+
+This repository is designed to be fully reproducible, providing a transparent workflow 
+for RNA-seq analysis from raw data to biological interpretation.
 
 *Important note:* Due to file size limitations, large files such as raw
 FASTQ files, reference genomes, Salmon indices, quantification outputs
@@ -42,16 +50,21 @@ European Nucleotide Archive (ENA).
 
 ## Pipeline Overview
 
-### 1. Data acquisition
+This RNA-seq workflow can be run in two ways:
+
+1. **Automated execution using Snakemake** – automatically manages workflow dependencies, execution order, and reproducibility.
+
+2. **Step-by-step execution** – each analysis step can be run manually using the scripts in 'scripts/'
+
+
+### General Steps
+
+The RNA-seq analysis pipeline consists of the following steps.
+
+#### 1. Data acquisition
 
 Raw sequencing files were downloaded from the European Nucleotide
 Archive (ENA) in FASTQ format.
-
-**Execution:**
-
-``` bash
-scripts/01_download_data.sh
-```
 
 Detailed sample metadata, including accession IDs, sample names and
 condition labels, is provided in:
@@ -59,8 +72,7 @@ condition labels, is provided in:
 ``` bash
 data/samples_metadata.csv
 ```
-
-### 2. Quality Control
+#### 2. Quality Control
 
 **Tools:** `FastQC`, `MultiQC`
 
@@ -72,22 +84,12 @@ all samples. This step is automated using a Bash script,
 `scripts/fastqc.sh`, that processes all FASTQ files in parallel and
 generates individual reports and execution logs.
 
-**Execution:**
-
-``` bash
-# Run FastQC on all FASTQ files
-bash scripts/02_fastqc.sh
-
-# MultiQC summary report
-multiqc results/fastqc_reports/ -o results/multiqc_report/
-```
-
-**Output Directory:** 
+**Output:** 
 
 * FastQC HTML reports for each sample: 'results/fastqc_reports/*.html' (not included in repository)
 * MultiQC summary report: 'results/multiqc_report/multiqc_report.html' (not included in repository)
 
-### 3. Transcript Quantification
+#### 3. Transcript Quantification
 
 **Tools:** `Salmon`
 
@@ -95,19 +97,13 @@ multiqc results/fastqc_reports/ -o results/multiqc_report/
 **Salmon**. Reads were mapped against the human reference transcriptome
 (GRCh38) to estimate abundances (TPM) and counts (NumReads)
 
-**Execution:**
+**Output:**
 
 ``` bash
-bash scripts/03_salmon_quant.sh
+data/salmon_quant  #(not included in repository)
 ```
 
-**Output Directory:**
-
-``` bash
-data/salmon_quant  (not included in repository)
-```
-
-### 4. Import of Transcript-Level Estimates & Gene-Level Summarization
+#### 4. Import of Transcript-Level Estimates & Gene-Level Summarization
 
 **Tools:** `tximport`, `GenomicFeatures` (R)
 
@@ -122,21 +118,14 @@ gene-level count matrix ready for statistical analysis.
   estimates were imported into R and summarized to the gene level using
   the tx2gene mapping.
 
-**Execution:**
-
-``` bash
-Rscript scripts/04a_tx2gene.R
-Rscript scripts/04b_tximport.R
-```
-
-**Output Directory:**
+**Output:**
 
 ``` bash
 data/tx2gene.csv
-data/rds/txi_salmon.rds  (not included in repository)
+data/rds/txi_salmon.rds  #(not included in repository)
 ```
 
-### 5. DESeq2 Object Creation & rlog Transformation
+#### 5. DESeq2 Object Creation & rlog Transformation
 
 **Tools:** `DESeq2` (R)
 
@@ -146,20 +135,14 @@ This script creates the DESeq2 object and filters low-count genes
 transformation to provide normalized counts for quality control
 analysis.
 
-**Execution:**
-
-``` bash
-Rscript scripts/05_DESeq2_rlog.R
-```
-
 **Outputs:**
 
 ``` bash
-data/rds/dds_filter.rds   # DESeq2 object for differential expression (input for Step 7, not included in repository).
-data/rds/rld.rds          # rlog-transformed counts for PCA & heatmaps (input for Step 6, not included in repository).
+data/rds/dds_filter.rds   # DESeq2 object for differential expression (not included in repository).
+data/rds/rld.rds          # rlog-transformed counts for PCA & heatmaps (not included in repository).
 ```
 
-### 6. QC: PCA & Sample Correlation Heatmap
+#### 6. QC: PCA & Sample Correlation Heatmap
 
 **Tools:** `DESeq2`, `ggplot2`, `ggrepel`, `pheatmap` (R)
 
@@ -172,17 +155,12 @@ similarity and detect potential outliers. For the full QC report (code, plots an
 - **Sample correlation heatmap:** Displays pairwise correlations of gene
   expression between all samples.
 
-**Execution:**
-
-    Rscript -e "rmarkdown::render('scripts/06_Sample_QC.Rmd')"
-
 **Outputs:**
 
 ``` bash
 results/figures_plots/PCA_plot.png
 results/figures_plots/qc_heatmap.png
 ```
-
 *Notes:*
 
 - PCA highlighted a potential outlier samples (SRR7819995), which
@@ -195,7 +173,7 @@ results/figures_plots/qc_heatmap.png
   with samples clustering primarily by treatment group.
   
 
-### 7. Differential Expression Analysis
+#### 7. Differential Expression Analysis
 
 **Tools:** `DESeq2`, `ggplot2`, `apeglm`, `pheatmap` (R)
 
@@ -220,11 +198,7 @@ file. For the full DE report (code, plots and commentary), see: **`results/repor
 - Heatmaps of top 50 DE genes
 
 *Note:* Detailed statistical results, figures, and plots are available
-in the markdown report. 'results/07_DE_analysis.Rmd'
-
-**Execution:**
-
-    Rscript -e "rmarkdown::render('scripts/07_DE_analysis.Rmd')"
+in the markdown report. 'results/07_DE_analysis.md'
 
 **Outputs:**
 
@@ -238,10 +212,66 @@ results/figures_plots/heatmap_upregulated.png
 results/figures_plots/heatmap_downregulated.png
 ```
 
-## Repository Structure
+**Full report:**
+``` bash
+results/report/07_DE_analysis.md
+```
+## Execution & Reproducibility
 
+**Option 1: Automated execution using Snakemake**
+
+``` bash
+snakemake --cores <number_of_cores> 
+``` 
+Runs all steps from raw FASTQ to differential expression results automatically.
+
+**Option 2: Step-by-step execution** 
+Each step can also be executed individually using the scripts in 'scripts/' in the order below:
+
+1. Download raw FASTQ files from ENA (https://www.ebi.ac.uk/ena/browser/view/PRJNA490376) using wget.
+
+``` bash
+bash scripts/01_download_data.sh
+``` 
+2. Run quality control:
+
+``` bash
+bash scripts/02_fastqc.sh
+``` 
+3. Transcript quantification using Salmon:
+
+``` bash
+bash scripts/03_salmon_quant.sh
+``` 
+4a. Generate tx2gene mapping:
+
+``` bash
+Rscript scripts/04a_tx2gene.R
+``` 
+4b. Import and summarize counts:
+
+``` bash
+Rscript scripts/04b_tximport.R
+``` 
+5. DESeq2 Object Creation & rlog Transformation
+
+``` bash
+Rscript scripts/05_DESeq2_rlog.R
+``` 
+6. Sample-level QC (PCA & heatmap):
+
+``` bash
+Rscript -e scripts/06_Sample_QC.R
+``` 
+7. Differential expression analysis:
+
+``` bash
+Rscript -e scripts/07_DE_analysis.R
+``` 
+
+## Repository Structure
+    ├── Snakefile
     ├── data/                   # sample metadata and RDS objects salmon references
-    │   ├── rds/                # RDS objects (not tracked in this repository)
     │   ├── samples_metadata.csv    
     │   ├── references/         # Reference genome, GTF file (not tracked)
     │   └── salmon_quant/       # Salmon transcript quantification outputs (not tracked)
@@ -269,51 +299,3 @@ results/figures_plots/heatmap_downregulated.png
   - pheatmap v1.0.13
   - ggrepel v0.9.6
   - tidyverse v2.0.0
-
-## Reproducibility
-
-The analysis is fully reproducible. All scripts are provided in the
-`scripts/` directory and should be executed in the order below.
-
-1.  Download raw FASTQ files from ENA
-    (<https://www.ebi.ac.uk/ena/browser/view/PRJNA490376>) using wget.
-
-``` bash
-bash scripts/01_download_data.sh
-```
-
-2.  Run quality control:
-
-``` bash
-bash scripts/02_fastqc.sh
-```
-
-3.  Transcript quantification using Salmon:
-
-``` bash
-bash scripts/03_salmon_quant.sh
-```
-
-4a. Generate tx2gene mapping:
-
-``` bash
-Rscript scripts/04a_tx2gene.R
-```
-
-4b. Import and summarize counts:
-
-``` bash
-Rscript scripts/04b_tximport.R
-```
-
-6.  Sample-level QC (PCA & heatmap):
-
-``` bash
-Rscript -e "rmarkdown::render('scripts/06_Sample_QC.Rmd')"
-```
-
-7.  Differential expression analysis:
-
-``` bash
-Rscript -e "rmarkdown::render('scripts/07_DE_analysis.Rmd')"
-```
