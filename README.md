@@ -100,7 +100,7 @@ generates individual reports and execution logs.
 **Output:**
 
 ``` bash
-data/salmon_quant  #(not included in repository)
+data/salmon_quant
 ```
 
 #### 4. Import of Transcript-Level Estimates & Gene-Level Summarization
@@ -122,7 +122,7 @@ gene-level count matrix ready for statistical analysis.
 
 ``` bash
 data/tx2gene.csv
-data/rds/txi_salmon.rds  #(not included in repository)
+data/rds/txi_salmon.rds
 ```
 
 #### 5. DESeq2 Object Creation & rlog Transformation
@@ -138,8 +138,8 @@ analysis.
 **Outputs:**
 
 ``` bash
-data/rds/dds_filter.rds   # DESeq2 object for differential expression (not included in repository).
-data/rds/rld.rds          # rlog-transformed counts for PCA & heatmaps (not included in repository).
+data/rds/dds_filter.rds   # DESeq2 object for differential expression
+data/rds/rld.rds          # rlog-transformed counts for PCA & heatmaps
 ```
 
 #### 6. QC: PCA & Sample Correlation Heatmap
@@ -299,3 +299,4 @@ Rscript -e scripts/07_DE_analysis.R
   - pheatmap v1.0.13
   - ggrepel v0.9.6
   - tidyverse v2.0.0
+- Snakemake v9.16.3
